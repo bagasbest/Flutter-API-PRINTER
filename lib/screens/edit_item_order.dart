@@ -53,6 +53,7 @@ class _EditItemOrderState extends State<EditItemOrder> {
 
    var discType = widget.productList[idx]["discount_type"];
    var disc = widget.productList[idx]["discount_value"];
+   print("sadasadasada" + discType.toString());
    if(discType != "") {
      if(discType == "amount") {
        amountStr = disc.toString();
@@ -458,7 +459,7 @@ class _EditItemOrderState extends State<EditItemOrder> {
                              'reason': reason,
                              'salesman': salesman,
                              'discount': int.parse(amountStr),
-                             'discount_type': 'ammount',
+                             'discount_type': 'amount',
                              'discount_value': int.parse(amountStr)
                            };
 

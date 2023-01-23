@@ -33,14 +33,15 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
   List salesmanList = [];
   var isClear = true;
   var _visible = false;
+  var accessToken = "";
 
   @override
   void initState() {
     super.initState();
-    _barcode.text = "2457716400XS";
-    _memberID.text = "087781138787";
+    // _barcode.text = "2457716400XS";
+    // _memberID.text = "087781138787";
     getAllMember();
-    getSalesman();
+    getBarerToken();
   }
 
   @override
@@ -922,7 +923,7 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
       var url = Uri.parse("${Api.getMemberWithNumber}${_memberID.text}");
       final response = await http.get(
         url,
-        headers: {'Authorization': 'Bearer ${Api.token}'},
+        headers: {'Authorization': 'Bearer $accessToken'},
       );
       if (response.statusCode == 200) {
         Map<String, dynamic> jsonData = jsonDecode(response.body.toString());
@@ -998,7 +999,7 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
       var url = Uri.parse(Api.getSalesman);
       final response = await http.get(
         url,
-        headers: {'Authorization': 'Bearer ${Api.token}'},
+        headers: {'Authorization': 'Bearer $accessToken'},
       );
       if (response.statusCode == 200) {
         Map<String, dynamic> jsonData = jsonDecode(response.body.toString());
@@ -1014,6 +1015,24 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
       }
     } catch (e) {
       print("Error $e");
+    }
+  }
+
+  getBarerToken() async {
+    try {
+      String url = Api.authentication;
+      Map<String, String> headers = {"Content-type": "application/x-www-form-urlencoded"};
+      String body = "grant_type=password&username=interfaceservice&password=P@ssw0rd123";
+
+      await http.post(Uri.parse(url), headers: headers, body: body).then((response) {
+        if(response.statusCode == 200) {
+          Map<String, dynamic> json = jsonDecode(response.body);
+          accessToken = json['access_token'];
+          getSalesman();
+        }
+      });
+    } catch (e) {
+      print("error $e");
     }
   }
 }

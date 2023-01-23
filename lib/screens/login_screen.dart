@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../utils/colors.dart';
 import '../utils/themes.dart';
@@ -28,22 +29,27 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _visible = false;
   List user = [];
   Object token = {};
+  bool _isChecked = false;
 
   @override
   void initState() {
     super.initState();
-    _email.text = "tri.budiman";
-    _password.text = "abs";
+    checkIsCheckedOrNot();
     getBarerToken();
+    getIncrement();
   }
 
   getLoginUser(String username) async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      var token = prefs.getString("token");
+      print("Bearer: $token");
+
       var url = Uri.parse(
           "https://training.bercaretail.com/erpapi/api/pos/Username?username=$username");
       final response = await http.get(
         url,
-        headers: {'Authorization': 'Bearer ${Api.token}'},
+        headers: {'Authorization': 'Bearer $token'},
       );
       if (response.statusCode == 200) {
         user = jsonDecode(response.body) as List;
@@ -57,24 +63,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
   getBarerToken() async {
     try {
-      var url = Uri.parse("https://training.bercaretail.com/erpapi/api/authenticate");
-      final response = await http.get(
-        url,
-        headers: {
-         // "Content-Type": "application/x-www-form-urlencoded",
-          'grant_type': 'password',
-          'username': 'interfaceservice',
-          'password': 'P@ssw0rd123',
-        },
-      );
+      String url = Api.authentication;
+      Map<String, String> headers = {
+        "Content-type": "application/x-www-form-urlencoded"
+      };
+      String body =
+          "grant_type=password&username=interfaceservice&password=P@ssw0rd123";
 
-      if (response.statusCode == 200) {
-        token = jsonDecode(response.body) as Object;
-        print(token);
-      } else {
-        print(response.statusCode);
-        throw Exception('Failed to load token');
-      }
+      await http
+          .post(Uri.parse(url), headers: headers, body: body)
+          .then((response) {
+        if (response.statusCode == 200) {
+          Map<String, dynamic> json = jsonDecode(response.body);
+          String accessToken = json['access_token'];
+          setTokenToPrefs("token", accessToken);
+        }
+      });
     } catch (e) {
       print("error $e");
     }
@@ -163,10 +167,27 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                 ),
+
+                Padding(
+                  padding: const EdgeInsets.only(left: 10),
+                  child: Row(
+                    children: [
+                      Checkbox(
+                        value: _isChecked,
+                        onChanged: (value) {
+                          setState(() {
+                            _isChecked = value!;
+                          });
+                        },
+                      ),
+                      Text('Remember username and password', style: TextStyle(fontSize: 16),)
+                    ],
+                  ),
+                ),
+
                 const SizedBox(
                   height: 16,
                 ),
-
                 /// LOADING INDIKATOR
                 Visibility(
                   visible: _visible,
@@ -209,29 +230,39 @@ class _LoginScreenState extends State<LoginScreen> {
                           });
 
                           await getLoginUser(_email.text);
-                          if(user.isNotEmpty) {
+                          if (user.isNotEmpty) {
                             setState(
-                                  () {
+                              () {
                                 _visible = false;
                               },
                             );
+
+                            if(_isChecked) {
+                              await setCheckBox("checked", true);
+                              await setTokenToPrefs("username", _email.text);
+                              await setTokenToPrefs("password", _password.text);
+                            } else {
+                              await setCheckBox("checked", false);
+                              await setTokenToPrefs("username", "");
+                              await setTokenToPrefs("password", "");
+                            }
+
+
+
                             /// MASUK KE HOMEPAGE JIKA SUKSES LOGIN
                             Route route = MaterialPageRoute(
                                 builder: (context) => HomeScreen(
-                                  user: user,
-                                ));
+                                      user: user,
+                                    ));
                             Navigator.push(context, route);
                           } else {
                             setState(
-                                  () {
+                              () {
                                 _visible = false;
                               },
                             );
                             toast("Username or Password Wrong!");
                           }
-
-
-
                         } else {
                           setState(
                             () {
@@ -249,6 +280,53 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  // Function to get an integer value from shared preferences
+  Future<String?> getFromPrefs(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(key);
+  }
+
+  getIncrement() async {
+    String? myIntValue = await getFromPrefs("increment");
+    if (myIntValue == null) {
+      setIntToPrefs("increment", 0);
+    }
+  }
+
+  // Function to save an integer value to shared preferences
+  Future<void> setIntToPrefs(String key, int value) async {
+    final prefs = await SharedPreferences.getInstance();
+    String leadingZeroInt = value.toString().padLeft(3, '0');
+    prefs.setString(key, leadingZeroInt);
+  }
+
+  // Function to save an integer value to shared preferences
+  Future<void> setTokenToPrefs(String key, String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString(key, value);
+  }
+
+  // Function to save an integer value to shared preferences
+  Future<void> setCheckBox(String key, bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool(key, value);
+  }
+
+
+  checkIsCheckedOrNot() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if(prefs.getBool("checked") == true) {
+        _email.text = prefs.getString("username")!;
+        _password.text = prefs.getString("password")!;
+        _isChecked = true;
+      }
+
+      setState(() {});
+    }catch(e) {}
+
   }
 }
 
