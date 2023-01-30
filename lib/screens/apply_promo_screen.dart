@@ -26,7 +26,7 @@ class _ApplyPromoScreenState extends State<ApplyPromoScreen> {
   var _barcode = TextEditingController();
   var _quantity = TextEditingController();
   var _memberID = TextEditingController();
-  var f = new NumberFormat.currency(locale: "id_ID", symbol: "Rp ");
+  var f = new NumberFormat.currency(locale: "id_ID", symbol: "Rp ", decimalDigits: 0);
   int groupVal = 0;
   List<String> answerOptions = [
     'LRB18DISC29X - LRB18 GET DISC 20',
@@ -133,7 +133,7 @@ class _ApplyPromoScreenState extends State<ApplyPromoScreen> {
                     Container(
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
-                          color: AppColors.blue),
+                          color: Colors.blue),
                       padding: EdgeInsets.all(7),
                       child: InkWell(
                         child: Row(
@@ -163,7 +163,7 @@ class _ApplyPromoScreenState extends State<ApplyPromoScreen> {
                       child: Container(
                         decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(5),
-                            color: AppColors.yellow),
+                            color: Colors.orange),
                         padding: EdgeInsets.all(7),
                         child: InkWell(
                           child: Row(
@@ -203,7 +203,7 @@ class _ApplyPromoScreenState extends State<ApplyPromoScreen> {
                     Container(
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
-                          color: AppColors.red),
+                          color: Colors.red),
                       padding: EdgeInsets.all(7),
                       child: InkWell(
                         child: Row(

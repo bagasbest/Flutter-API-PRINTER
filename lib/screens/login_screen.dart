@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bercaretailpos/screens/open_shift/open_shift_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -117,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       prefixIcon: Icon(Icons.people),
                       focusedBorder: OutlineInputBorder(
                         borderSide:
-                            BorderSide(color: AppColors.green, width: 2.0),
+                            BorderSide(color: Colors.green, width: 2.0),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(color: Colors.grey, width: 2.0),
@@ -143,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       prefixIcon: Icon(Icons.lock_open_outlined),
                       focusedBorder: OutlineInputBorder(
                         borderSide:
-                            BorderSide(color: AppColors.green, width: 2.0),
+                            BorderSide(color: Colors.green, width: 2.0),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(color: Colors.grey, width: 2.0),
@@ -192,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Visibility(
                   visible: _visible,
                   child: const SpinKitRipple(
-                    color: AppColors.green,
+                    color: Colors.green,
                   ),
                 ),
 
@@ -210,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Container(
                         decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(6),
-                            color: AppColors.green),
+                            color: Colors.green),
                         child: const Center(
                           child: Text(
                             'Login',
@@ -248,13 +249,27 @@ class _LoginScreenState extends State<LoginScreen> {
                             }
 
 
+                            if(user[0]["isOpen"] == "true") {
+                              /// MASUK KE HOMEPAGE JIKA SUKSES LOGIN
+                              Route route = MaterialPageRoute(
+                                  builder: (context) => HomeScreen(
+                                    user: user,
+                                  ));
+                              Navigator.push(context, route);
+                            } else {
+                              /// MASUK KE OPEN SHIFT JIKA SUKSES LOGIN
+                              Route route = MaterialPageRoute(
+                                  builder: (context) => OpenShiftScreen(
+                                    user: user,
+                                  ));
+                              Navigator.push(context, route);
+                            }
 
-                            /// MASUK KE HOMEPAGE JIKA SUKSES LOGIN
-                            Route route = MaterialPageRoute(
-                                builder: (context) => HomeScreen(
-                                      user: user,
-                                    ));
-                            Navigator.push(context, route);
+                            // Route route = MaterialPageRoute(
+                            //     builder: (context) => HomeScreen(
+                            //       user: user,
+                            //     ));
+                            // Navigator.push(context, route);
                           } else {
                             setState(
                               () {
@@ -337,7 +352,7 @@ void toast(String message) {
       toastLength: Toast.LENGTH_SHORT,
       gravity: ToastGravity.BOTTOM,
       timeInSecForIosWeb: 1,
-      backgroundColor: AppColors.green,
+      backgroundColor: Colors.green,
       textColor: Colors.white,
       fontSize: 16.0);
 }

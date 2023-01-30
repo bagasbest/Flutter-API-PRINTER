@@ -26,7 +26,8 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
   var _barcode = TextEditingController();
   var _quantity = TextEditingController();
   var _memberID = TextEditingController();
-  var f = new NumberFormat.currency(locale: "id_ID", symbol: "Rp ");
+  var f =
+      NumberFormat.currency(locale: "id_ID", symbol: "Rp ", decimalDigits: 0);
   List productList = [];
   List orderOwned = [];
   List memberList = [];
@@ -34,11 +35,13 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
   var isClear = true;
   var _visible = false;
   var accessToken = "";
+  var searchBy = "Barcode";
+  List<String> searchByItem = ['Barcode', 'Product Name', 'Article'];
 
   @override
   void initState() {
     super.initState();
-    // _barcode.text = "2457716400XS";
+    // _barcode.text = "8994752719070";
     // _memberID.text = "087781138787";
     getAllMember();
     getBarerToken();
@@ -81,7 +84,7 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                           ),
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.green,
+                          color: Colors.green,
                           borderRadius: BorderRadius.only(
                             topLeft: Radius.circular(8),
                             topRight: Radius.circular(8),
@@ -90,7 +93,7 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                       ),
                       Container(
                         decoration: BoxDecoration(
-                          border: Border.all(width: 1, color: AppColors.green),
+                          border: Border.all(width: 1, color: Colors.green),
                           borderRadius: BorderRadius.only(
                             bottomRight: Radius.circular(8),
                             bottomLeft: Radius.circular(8),
@@ -102,6 +105,41 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Container(
+                                padding: EdgeInsets.only(left: 16, right: 16),
+                                margin: EdgeInsets.only(
+                                  top: 16,
+                                  left: 16,
+                                  right: 16,
+                                ),
+                                width: MediaQuery.of(context).size.width,
+                                //untuk width full
+                                decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey),
+                                    borderRadius:
+                                        BorderRadius.circular(5) //untuk border
+                                    ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: searchBy,
+                                    onChanged: (newValue) {
+                                      setState(() {
+                                        searchBy = newValue!;
+                                      });
+                                    },
+                                    items: searchByItem
+                                        .map<DropdownMenuItem<String>>(
+                                            (String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                  ),
+                                )),
                             SizedBox(
                               height: 10,
                             ),
@@ -124,8 +162,8 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                     focusedBorder: OutlineInputBorder(
                                       borderSide: BorderSide(
                                           color: (barcodeStr.isNotEmpty)
-                                              ? AppColors.green
-                                              : AppColors.red,
+                                              ? Colors.green
+                                              : Colors.red,
                                           width: 2.0),
                                     ),
                                     enabledBorder: OutlineInputBorder(
@@ -135,7 +173,7 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                     suffixIcon: InkWell(
                                         child: Icon(
                                           Icons.qr_code,
-                                          color: AppColors.green,
+                                          color: Colors.green,
                                         ),
                                         onTap: () {
                                           toast(
@@ -183,7 +221,7 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                         height: 50,
                                         width: 50,
                                         decoration: BoxDecoration(
-                                            color: AppColors.yellow,
+                                            color: Colors.orange,
                                             borderRadius:
                                                 BorderRadius.circular(2)),
                                         child: InkWell(
@@ -232,7 +270,7 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                         padding: EdgeInsets.symmetric(
                                             horizontal: 10),
                                         decoration: BoxDecoration(
-                                            color: AppColors.green,
+                                            color: Colors.green,
                                             borderRadius:
                                                 BorderRadius.circular(2)),
                                         child: InkWell(
@@ -305,7 +343,20 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                           setState(() {
                                             _visible = true;
                                           });
-                                          await getProduct(_barcode.text);
+                                          if (searchBy == "Product Name") {
+                                            getProduct(
+                                                _barcode.text
+                                                    .toString()
+                                                    .toLowerCase(),
+                                                "",
+                                                "");
+                                          } else if (searchBy == "Barcode") {
+                                            getProduct("",
+                                                _barcode.text.toString(), "");
+                                          } else {
+                                            getProduct("", "",
+                                                _barcode.text.toString());
+                                          }
                                         } else {
                                           toast("Please input barcode");
                                         }
@@ -314,7 +365,7 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                         decoration: BoxDecoration(
                                             borderRadius:
                                                 BorderRadius.circular(5),
-                                            color: AppColors.blue),
+                                            color: Colors.blue),
                                         padding: EdgeInsets.all(16),
                                         child: InkWell(
                                           child: Row(
@@ -350,11 +401,11 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                           Route route = MaterialPageRoute(
                                               builder: (context) =>
                                                   ApplyPromoScreen(
-                                                    user: widget.user,
-                                                    productList: productList,
-                                                    orderOwned: orderOwned,
-                                                    salesmanList: salesmanList
-                                                  ));
+                                                      user: widget.user,
+                                                      productList: productList,
+                                                      orderOwned: orderOwned,
+                                                      salesmanList:
+                                                          salesmanList));
                                           Navigator.push(context, route);
                                         }
                                       },
@@ -362,7 +413,7 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                         decoration: BoxDecoration(
                                             borderRadius:
                                                 BorderRadius.circular(5),
-                                            color: AppColors.green),
+                                            color: Colors.green),
                                         padding: EdgeInsets.all(16),
                                         child: InkWell(
                                           child: Row(
@@ -401,7 +452,7 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                         decoration: BoxDecoration(
                                             borderRadius:
                                                 BorderRadius.circular(5),
-                                            color: AppColors.red),
+                                            color: Colors.red),
                                         padding: EdgeInsets.all(16),
                                         child: InkWell(
                                           child: Row(
@@ -446,7 +497,7 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                   child: Visibility(
                     visible: _visible,
                     child: const SpinKitRipple(
-                      color: AppColors.green,
+                      color: Colors.green,
                     ),
                   ),
                 ),
@@ -474,7 +525,7 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                 ),
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.green,
+                                color: Colors.green,
                                 borderRadius: BorderRadius.only(
                                   topLeft: Radius.circular(8),
                                   topRight: Radius.circular(8),
@@ -483,8 +534,8 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                             ),
                             Container(
                               decoration: BoxDecoration(
-                                border: Border.all(
-                                    width: 1, color: AppColors.green),
+                                border:
+                                    Border.all(width: 1, color: Colors.green),
                                 borderRadius: BorderRadius.only(
                                   bottomRight: Radius.circular(8),
                                   bottomLeft: Radius.circular(8),
@@ -516,7 +567,7 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                     child: Container(
                                       padding: EdgeInsets.all(16),
                                       decoration: BoxDecoration(
-                                          color: AppColors.yellow,
+                                          color: Colors.orange,
                                           borderRadius:
                                               BorderRadius.circular(6)),
                                       child: Text(
@@ -538,7 +589,9 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                       itemCount: productList.length,
                                       itemBuilder: (context, index) {
                                         var f = new NumberFormat.currency(
-                                            locale: "id_ID", symbol: "Rp ");
+                                            locale: "id_ID",
+                                            symbol: "Rp ",
+                                            decimalDigits: 0);
                                         return Padding(
                                           padding:
                                               const EdgeInsets.only(bottom: 5),
@@ -601,26 +654,32 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                                                     FontWeight
                                                                         .w500),
                                                           ),
-                                                          (productList[
-                                                          index][
-                                                          "discount"] != 0) ? Text(
-                                                            "Discount: ",
-                                                            style: TextStyle(
-                                                                fontSize: 16,
-                                                                fontWeight:
-                                                                FontWeight
-                                                                    .w500),
-                                                          ) : Container(),
-                                                          (productList[
-                                                          index][
-                                                          "discount"] != 0) ? Text(
-                                                            "Remark: ",
-                                                            style: TextStyle(
-                                                                fontSize: 16,
-                                                                fontWeight:
-                                                                FontWeight
-                                                                    .w500),
-                                                          ) : Container(),
+                                                          (productList[index][
+                                                                      "discount"] !=
+                                                                  0)
+                                                              ? Text(
+                                                                  "Discount: ",
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          16,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500),
+                                                                )
+                                                              : Container(),
+                                                          (productList[index][
+                                                                      "discount"] !=
+                                                                  0)
+                                                              ? Text(
+                                                                  "Remark: ",
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          16,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500),
+                                                                )
+                                                              : Container(),
                                                           Text(
                                                             "Price Total: ",
                                                             style: TextStyle(
@@ -692,62 +751,79 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                                                     FontWeight
                                                                         .w500),
                                                           ),
-                                                          (productList[
-                                                          index][
-                                                          "discount"] != 0) ? Text(
-                                                            f.format(productList[
-                                                            index][
-                                                            "discount"]),
-                                                            style: TextStyle(
-                                                                fontSize: 16,
-                                                                fontWeight:
-                                                                FontWeight
-                                                                    .w500),
-                                                          ) : Container(),
-                                                          (productList[
-                                                          index][
-                                                          "discount"] != 0) ? Container(
-                                                            width: MediaQuery.of(
-                                                                context)
-                                                                .size
-                                                                .width *
-                                                                0.4,
-                                                            child: Text(
-                                                              productList[
-                                                              index][
-                                                              "remark"],
-                                                              maxLines: 1,
-                                                              overflow: TextOverflow.ellipsis,
-                                                              style: TextStyle(
-                                                                  fontSize: 16,
-                                                                  fontWeight:
-                                                                  FontWeight
-                                                                      .w500),
-                                                            ),
-                                                          ) : Container(),
-                                                          (productList[
-                                                          index][
-                                                          "discount"] != 0) ? Text(
-                                                            f.format(productList[
-                                                                    index][
-                                                                "price_total"] - productList[
-                                                            index][
-                                                            "discount"]),
-                                                            style: TextStyle(
-                                                                fontSize: 16,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w500),
-                                                          ) : Text(
-                                                            f.format(productList[
-                                                            index][
-                                                            "price_total"]),
-                                                            style: TextStyle(
-                                                                fontSize: 16,
-                                                                fontWeight:
-                                                                FontWeight
-                                                                    .w500),
-                                                          )
+                                                          (productList[index][
+                                                                      "discount"] !=
+                                                                  0)
+                                                              ? Text(
+                                                                  f.format(productList[
+                                                                          index]
+                                                                      [
+                                                                      "discount"]),
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          16,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500),
+                                                                )
+                                                              : Container(),
+                                                          (productList[index][
+                                                                      "discount"] !=
+                                                                  0)
+                                                              ? Container(
+                                                                  width: MediaQuery.of(
+                                                                              context)
+                                                                          .size
+                                                                          .width *
+                                                                      0.4,
+                                                                  child: Text(
+                                                                    productList[
+                                                                            index]
+                                                                        [
+                                                                        "remark"],
+                                                                    maxLines: 1,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                    style: TextStyle(
+                                                                        fontSize:
+                                                                            16,
+                                                                        fontWeight:
+                                                                            FontWeight.w500),
+                                                                  ),
+                                                                )
+                                                              : Container(),
+                                                          (productList[index][
+                                                                      "discount"] !=
+                                                                  0)
+                                                              ? Text(
+                                                                  f.format(productList[
+                                                                              index]
+                                                                          [
+                                                                          "price_total"] -
+                                                                      productList[
+                                                                              index]
+                                                                          [
+                                                                          "discount"]),
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          16,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500),
+                                                                )
+                                                              : Text(
+                                                                  f.format(productList[
+                                                                          index]
+                                                                      [
+                                                                      "price_total"]),
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          16,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500),
+                                                                )
                                                         ],
                                                       )
                                                     ],
@@ -771,15 +847,20 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                                             context, route);
 
                                                     if (result is DataObject) {
-                                                      productList.removeAt(result.value2);
-                                                      if(!result.value3) {
-                                                        productList.insert(result.value2, result.value1);
+                                                      productList.removeAt(
+                                                          result.value2);
+                                                      if (!result.value3) {
+                                                        productList.insert(
+                                                            result.value2,
+                                                            result.value1);
                                                       } else {
-                                                        if(productList.length ==0) {
+                                                        if (productList
+                                                                .length ==
+                                                            0) {
                                                           isClear = true;
                                                         }
                                                       }
-                                                      setState((){});
+                                                      setState(() {});
                                                     }
                                                   },
                                                   child: Container(
@@ -798,7 +879,7 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                                                     Radius
                                                                         .circular(
                                                                             5)),
-                                                        color: AppColors.blue),
+                                                        color: Colors.blue),
                                                     child: Row(
                                                       mainAxisAlignment:
                                                           MainAxisAlignment
@@ -838,7 +919,7 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
                                     child: Container(
                                       padding: EdgeInsets.all(16),
                                       decoration: BoxDecoration(
-                                          color: AppColors.green,
+                                          color: Colors.green,
                                           borderRadius:
                                               BorderRadius.circular(6)),
                                       child: Text(
@@ -864,9 +945,12 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
     );
   }
 
-  getProduct(String barcode) async {
+  getProduct(String productName, String barcode, String article) async {
     try {
-      var url = Uri.parse("${Api.getProduct}$barcode");
+      var siteKey = widget.user[0]["Site"];
+      var url = Uri.parse(
+          "https://training.bercaretail.com/erpapi/api/pos/GetProduct?article=$article&barcode=$barcode&name=$productName&sitekey=$siteKey");
+
       final response = await http.get(
         url,
         headers: {'Authorization': 'Bearer ${Api.token}'},
@@ -988,7 +1072,7 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
   getSalesAmount() {
     var result = 0.0;
     productList.forEach((element) {
-      result += element["price_total"]-element["discount"];
+      result += element["price_total"] - element["discount"];
     });
     var curr = f.format(result);
     return curr;
@@ -1021,11 +1105,16 @@ class _CreateSalesOrderState extends State<CreateSalesOrder> {
   getBarerToken() async {
     try {
       String url = Api.authentication;
-      Map<String, String> headers = {"Content-type": "application/x-www-form-urlencoded"};
-      String body = "grant_type=password&username=interfaceservice&password=P@ssw0rd123";
+      Map<String, String> headers = {
+        "Content-type": "application/x-www-form-urlencoded"
+      };
+      String body =
+          "grant_type=password&username=interfaceservice&password=P@ssw0rd123";
 
-      await http.post(Uri.parse(url), headers: headers, body: body).then((response) {
-        if(response.statusCode == 200) {
+      await http
+          .post(Uri.parse(url), headers: headers, body: body)
+          .then((response) {
+        if (response.statusCode == 200) {
           Map<String, dynamic> json = jsonDecode(response.body);
           accessToken = json['access_token'];
           getSalesman();

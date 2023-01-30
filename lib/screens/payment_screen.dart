@@ -40,7 +40,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   var voucher = TextEditingController();
   var approvalCode = TextEditingController();
   var cardHolder = TextEditingController();
-  var f = NumberFormat.currency(locale: "id_ID", symbol: "Rp ");
+  var f =
+      NumberFormat.currency(locale: "id_ID", symbol: "Rp ", decimalDigits: 0);
   var transRef = "OPCO";
   var paymentRef = "Trans Ref";
   var paymentMethod = "CASH";
@@ -71,6 +72,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   var totalChanges = -1.0;
   var rounding = 0;
   var increment = "";
+  var voucherUsedList = [];
+  var accessToken = "";
 
   ///Dependency Baru
   BlueThermalPrinter bluetooth = BlueThermalPrinter.instance;
@@ -81,6 +84,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   void initState() {
     super.initState();
 
+    // voucher.text = "EY25GL01121121052929";
+
     /// Fungsi untuk cek bluetooth ponsel menyala atau mati
     initPlatformState();
 
@@ -89,6 +94,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
     getPaymentMethod();
     getBanks();
     getAllCardBank();
+    getBearerToken();
+    getIncrement();
   }
 
   /// Fungsi untuk cek bluetooth ponsel menyala atau mati
@@ -248,8 +255,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       focusedBorder: OutlineInputBorder(
                         borderSide: BorderSide(
                             color: (transRefStr.isNotEmpty)
-                                ? AppColors.green
-                                : AppColors.red,
+                                ? Colors.green
+                                : Colors.red,
                             width: 1.0),
                       ),
                       enabledBorder: OutlineInputBorder(
@@ -318,8 +325,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       focusedBorder: OutlineInputBorder(
                         borderSide: BorderSide(
                             color: (paymentRefStr.isNotEmpty)
-                                ? AppColors.green
-                                : AppColors.red,
+                                ? Colors.green
+                                : Colors.red,
                             width: 1.0),
                       ),
                       enabledBorder: OutlineInputBorder(
@@ -499,8 +506,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(
                                       color: (cardNumberRefStr.isNotEmpty)
-                                          ? AppColors.green
-                                          : AppColors.red,
+                                          ? Colors.green
+                                          : Colors.red,
                                       width: 1.0),
                                 ),
                                 enabledBorder: OutlineInputBorder(
@@ -543,8 +550,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(
                                       color: (approvalCodeRefStr.isNotEmpty)
-                                          ? AppColors.green
-                                          : AppColors.red,
+                                          ? Colors.green
+                                          : Colors.red,
                                       width: 1.0),
                                 ),
                                 enabledBorder: OutlineInputBorder(
@@ -587,8 +594,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(
                                       color: (cardHolderRefStr.isNotEmpty)
-                                          ? AppColors.green
-                                          : AppColors.red,
+                                          ? Colors.green
+                                          : Colors.red,
                                       width: 1.0),
                                 ),
                                 enabledBorder: OutlineInputBorder(
@@ -632,7 +639,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 ),
                                 child: TextFormField(
                                   controller: voucher,
-                                  keyboardType: TextInputType.number,
+                                  keyboardType: TextInputType.text,
                                   autovalidateMode:
                                       AutovalidateMode.onUserInteraction,
                                   decoration: InputDecoration(
@@ -640,8 +647,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                     focusedBorder: OutlineInputBorder(
                                       borderSide: BorderSide(
                                           color: (voucherStr.isNotEmpty)
-                                              ? AppColors.green
-                                              : AppColors.red,
+                                              ? Colors.green
+                                              : Colors.red,
                                           width: 1.0),
                                     ),
                                     enabledBorder: OutlineInputBorder(
@@ -687,13 +694,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               keyboardType: TextInputType.number,
                               autovalidateMode:
                                   AutovalidateMode.onUserInteraction,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly
+                              ],
                               decoration: InputDecoration(
                                 hintText: 'Input Amount',
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(
                                       color: (amountStr.isNotEmpty)
-                                          ? AppColors.green
-                                          : AppColors.red,
+                                          ? Colors.green
+                                          : Colors.red,
                                       width: 1.0),
                                 ),
                                 enabledBorder: OutlineInputBorder(
@@ -716,7 +726,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               Row(
                 children: <Widget>[
                   InkWell(
-                    onTap: () {
+                    onTap: () async {
                       if (totalChanges < 0) {
                         if (salesman.isEmpty) {
                           toast('Please choose Salesman');
@@ -742,7 +752,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               };
                               paymentList.add(data);
                               salesAmount = grandPrice;
-                              print("Setelaj l;ok : $totalChanges");
                               getRemainingPayment();
                               toast('Payment Cash Successfully');
                               setState(() {});
@@ -780,20 +789,29 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           } else if (paymentMethod == "VOUCHER") {
                             if (voucherStr.isEmpty) {
                               toast('Please input Voucher Code');
-                            } else if (int.parse(voucherStr) > 0) {
-                              Object data = {
-                                'type': 'VOUCHER',
-                                'amount': int.parse(voucherStr),
-                                'cardType': '',
-                              };
-                              paymentList.add(data);
-                              salesAmount = grandPrice;
-                              print("Setelaj l;ok : $totalChanges");
-                              getRemainingPayment();
-                              toast('Payment Voucher Successfully');
-                              setState(() {});
                             } else {
-                              toast('Please input Voucher with correct number');
+                              var totalValue = 0;
+                              await getVoucher();
+                              voucherUsedList.forEach((element) {
+                                if (element["used"] == false) {
+                                  totalValue +=
+                                      int.parse(element["value"].toString());
+                                  element["used"] = true;
+                                }
+                              });
+
+                              if (totalValue > 0) {
+                                Object data = {
+                                  'type': 'VOUCHER',
+                                  'amount': totalValue,
+                                  'cardType': '',
+                                };
+                                paymentList.add(data);
+                                salesAmount = grandPrice;
+                                getRemainingPayment();
+                                toast('Payment Voucher Successfully');
+                                setState(() {});
+                              }
                             }
                           }
                         }
@@ -805,7 +823,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
-                          color: AppColors.green),
+                          color: Colors.green),
                       padding: EdgeInsets.all(11),
                       child: InkWell(
                         child: Row(
@@ -849,19 +867,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           _showPrintDialog();
                         }
                       }
-                      //    Route route = MaterialPageRoute(
-                      //      builder: (context) => Laporan(
-                      //          user: widget.user,
-                      //          productList: widget.productList,
-                      //          salesmanList: widget.salesmanList,
-                      //          orderOwned: widget.orderOwned),
-                      //    );
-                      //    Navigator.push(context, route);
                     },
                     child: Container(
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
-                          color: AppColors.blue),
+                          color: Colors.blue),
                       padding: EdgeInsets.all(16),
                       child: Row(
                         children: [
@@ -881,18 +891,33 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                   InkWell(
                     onTap: () {
-                      Navigator.of(context).pop();
+                      if (totalChanges < 0) {
+                        toast('Please complete payment before finish payment');
+                      } else {
+                        Route route = MaterialPageRoute(
+                          builder: (context) => Laporan(
+                            user: widget.user,
+                            sendDataList: widget.productList,
+                            increment: increment,
+                            rounding: rounding,
+                            totalChanges: totalChanges,
+                            grandPrice: grandPrice,
+                            paymentList: paymentList,
+                          ),
+                        );
+                        Navigator.push(context, route);
+                      }
                     },
                     child: Container(
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
-                          color: AppColors.yellow),
+                          color: Colors.red),
                       padding: EdgeInsets.all(16),
                       child: InkWell(
                         child: Row(
                           children: [
                             Text(
-                              'Back',
+                              'Save PDF',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -930,7 +955,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ),
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.green,
+                        color: Colors.green,
                         borderRadius: BorderRadius.only(
                           topLeft: Radius.circular(8),
                           topRight: Radius.circular(8),
@@ -939,7 +964,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     ),
                     Container(
                       decoration: BoxDecoration(
-                        border: Border.all(width: 1, color: AppColors.green),
+                        border: Border.all(width: 1, color: Colors.green),
                         borderRadius: BorderRadius.only(
                           bottomRight: Radius.circular(8),
                           bottomLeft: Radius.circular(8),
@@ -968,7 +993,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             child: Container(
                               padding: EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                  color: AppColors.yellow,
+                                  color: Colors.orange,
                                   borderRadius: BorderRadius.circular(6)),
                               child: Text(
                                 'Sales Period ${convertDate()}',
@@ -989,7 +1014,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               itemCount: widget.productList.length,
                               itemBuilder: (context, index) {
                                 var f = new NumberFormat.currency(
-                                    locale: "id_ID", symbol: "Rp ");
+                                    locale: "id_ID",
+                                    symbol: "Rp ",
+                                    decimalDigits: 0);
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 5),
                                   child: Card(
@@ -1194,11 +1221,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             height: 10,
                           ),
                           Padding(
+                            padding: const EdgeInsets.only(
+                                top: 16, left: 16, right: 16),
+                            child: Align(
+                              alignment: Alignment.topRight,
+                              child: Text(
+                                "Sub-Total: ${getSubTotal()}",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                            ),
+                          ),
+                          Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Align(
                               alignment: Alignment.topRight,
                               child: Text(
-                                "Sub-Total ${getSubTotal()}",
+                                "Disc-Total: ${getDiscTotal()}",
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold, fontSize: 16),
                               ),
@@ -1227,7 +1266,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             child: Container(
                               padding: EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                  color: AppColors.green,
+                                  color: Colors.green,
                                   borderRadius: BorderRadius.circular(6)),
                               child: Text(
                                 'Sales Amount: ${getSalesAmount()} ',
@@ -1299,7 +1338,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                                     },
                                                     child: Icon(
                                                       Icons.clear_outlined,
-                                                      color: AppColors.blue,
+                                                      color: Colors.blue,
                                                     ),
                                                   )
                                                 ],
@@ -1354,7 +1393,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                                 child: Container(
                                                   padding: EdgeInsets.all(16),
                                                   decoration: BoxDecoration(
-                                                      color: AppColors.yellow,
+                                                      color: Colors.orange,
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               6)),
@@ -1383,7 +1422,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                   child: Container(
                                     padding: EdgeInsets.all(16),
                                     decoration: BoxDecoration(
-                                        color: AppColors.blue,
+                                        color: Colors.blue,
                                         borderRadius: BorderRadius.circular(6)),
                                     child: Text(
                                       'Remaining Payment: ${getSalesAmount2()}',
@@ -1419,7 +1458,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               Radius.circular(16),
             ),
           ),
-          backgroundColor: AppColors.green,
+          backgroundColor: Colors.green,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1451,7 +1490,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 height: 16,
               ),
               Container(
-                height: 100,
+                height: 300,
+                width: 500,
                 child: ListView.builder(
                   itemCount: _devices.length,
                   itemBuilder: (BuildContext context, int i) {
@@ -1494,8 +1534,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
       /// koneksikan printer bluetooth yang dipilih
       bluetooth.isConnected.then((isConnected) {
         if (isConnected == true) {
-          var incrementInc = int.parse(increment);
+          var incrementInc =
+              int.parse(increment.toString().replaceAll(".0", ""));
           setIntToPrefs("increment", incrementInc++);
+
           //SIZE
           // 0- normal size text
           // 1- only bold text
@@ -1520,6 +1562,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
               "RECEIPT NO: ${widget.user[0]["Code"]}${getTodayDate()}$increment",
               0,
               0);
+          bluetooth.printCustom('----------------------------------', 0, 1);
+          bluetooth.printCustom('Description(s)', 0, 1);
           bluetooth.printCustom('----------------------------------', 0, 1);
 
           /// Body Struk
@@ -1637,20 +1681,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     widget.productList.forEach((element) {
       result += element["price_total"] - element["discount"];
     });
-
-    try {
-      var clearDouble = int.parse(result.toString().replaceAll(".0", ""));
-      int last3Digits = clearDouble % 1000;
-      if (last3Digits > 500) {
-        last3Digits = 1000 - last3Digits;
-        result += last3Digits;
-      } else {
-        result -= last3Digits;
-      }
-      rounding = last3Digits;
-    } catch (e) {
-      rounding = 0;
-    }
 
     salesAmount = result;
     grandPrice = result;
@@ -1810,7 +1840,22 @@ class _PaymentScreenState extends State<PaymentScreen> {
     });
     if (salesAmount <= 0) {
       totalChanges = salesAmount * -1.0;
+      try {
+        var clearDouble =
+            int.parse(totalChanges.toString().replaceAll(".0", ""));
+        int last3Digits = clearDouble % 1000;
+        if (last3Digits > 500) {
+          last3Digits = 1000 - last3Digits;
+          totalChanges += last3Digits;
+        } else {
+          totalChanges -= last3Digits;
+        }
+        rounding = last3Digits;
+      } catch (e) {
+        rounding = 0;
+      }
     }
+
     setState(() {});
 
     // var curr = f.format(salesAmount);
@@ -1851,7 +1896,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   getTotalQty() {
     var result = 0;
     widget.productList.forEach((element) {
-      result += int.parse(element["qty"]);
+      result += int.parse(element["qty"].toString());
     });
     return result.toString();
   }
@@ -1859,7 +1904,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   getTotalDisc() {
     var result = 0;
     widget.productList.forEach((element) {
-      result += int.parse(element["discount"]);
+      result += int.parse(element["discount"].toString());
     });
     return result.toString();
   }
@@ -1871,5 +1916,90 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     var curr = f.format(salesAmount);
     return curr;
+  }
+
+  getBearerToken() async {
+    try {
+      String url = Api.authentication;
+      Map<String, String> headers = {
+        "Content-type": "application/x-www-form-urlencoded"
+      };
+      String body =
+          "grant_type=password&username=interfaceservice&password=P@ssw0rd123";
+
+      await http
+          .post(Uri.parse(url), headers: headers, body: body)
+          .then((response) {
+        if (response.statusCode == 200) {
+          Map<String, dynamic> json = jsonDecode(response.body);
+          accessToken = json['access_token'];
+        }
+      });
+    } catch (e) {
+      print("error $e");
+    }
+  }
+
+  getVoucher() async {
+    try {
+      setState(() {
+        visibleProgress = true;
+      });
+      var url = Uri.parse(
+          "https://training.bercaretail.com/erpapi/api/vouchers/$voucherStr");
+      final response = await http.get(
+        url,
+        headers: {'Authorization': 'Bearer $accessToken'},
+      );
+      if (response.statusCode == 200) {
+        Map<String, dynamic> jsonData = jsonDecode(response.body.toString());
+
+        if (jsonData['IsUsed'] == false) {
+          var code = jsonData["Code"];
+          var disc = int.parse(jsonData['Value']
+              .toString()
+              .substring(0, jsonData['Value'].toString().lastIndexOf(".")));
+
+          bool containsValue =
+              voucherUsedList.any((object) => object["code"] == code);
+
+          if (!containsValue) {
+            Object data = {
+              "code": code,
+              "value": disc,
+              "used": false,
+            };
+            toast('You have discount ${f.format(disc)}');
+            voucherUsedList.add(data);
+          } else {
+            toast('Voucher has already user');
+          }
+        } else {
+          toast('Voucher has already user');
+        }
+
+        setState(() {
+          visibleProgress = false;
+        });
+      } else {
+        setState(() {
+          visibleProgress = false;
+        });
+        toast('No Voucher Found');
+      }
+    } catch (e) {
+      setState(() {
+        visibleProgress = false;
+      });
+      toast('No Voucher Found');
+    }
+  }
+
+  getDiscTotal() {
+    var totalValue = 0;
+    widget.productList.forEach((element) {
+      totalValue += int.parse(element["discount"].toString());
+    });
+    return f.format(totalValue);
   }
 }

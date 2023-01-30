@@ -25,6 +25,6 @@ ThemeData Themes() {
   }
 
   return ThemeData(
-    primarySwatch: buildMaterialColor(AppColors.green,),
+    primarySwatch: buildMaterialColor(Colors.green,),
   );
 }
